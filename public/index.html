@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registration</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+  <style>
+    .copy-btn {
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container mt-5 shadow-lg p-5 rounded rounded-5">
+    <h1 class="text-primary text-center shadow-lg rounded mb-3 p-3">Skill-up Project 10</h1>
+    <h3>Registration Form</h3>
+    <div class="alert alert-info">
+      Please make a payment to the following account number before proceeding to fill the form. So you can upload your proof of payment. 
+      <span style="font-weight: itallic;">Proof of payment is very important, else your registration will not count.</span>
+      <br><strong>Account Name:</strong> <span style="font-weight: bold;">CALVERT HILLS LIMITED</span>
+      <br><strong>Bank Name:</strong> <span style="font-weight: bold;">ZENITH BANK</span>
+      <br><strong>Account Number:</strong> <span id="accountNumber" style="font-weight: bold;">1224727388</span>
+      <button class="btn btn-secondary btn-sm copy-btn" onclick="copyToClipboard()">Copy Account Number</button>
+    </div>
+    <form action="/register" method="POST" enctype="multipart/form-data">
+      <div class="form-group">
+        <label for="fullName">Full Name</label>
+        <input type="text" class="form-control" id="fullName" name="fullName" required>
+      </div>
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" class="form-control" id="email" name="email" required>
+      </div>
+      <div class="form-group">
+        <label for="phoneNumber">Phone Number</label>
+        <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" required>
+      </div>
+      <div class="form-group">
+        <label for="skillToLearn">Skill to Learn</label>
+        <input type="text" class="form-control" id="skillToLearn" name="skillToLearn" required>
+      </div>
+      <div class="form-group">
+        <label for="churchOrParish">Church or Parish (optional)</label>
+        <input type="text" class="form-control" id="churchOrParish" name="churchOrParish">
+      </div>
+      <div class="form-group">
+        <label for="proofOfPayment">Proof of Payment (Upload)</label>
+        <input type="file" class="form-control-file" id="proofOfPayment" name="proofOfPayment" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+  </div>
+
+  <script>
+    function copyToClipboard() {
+      const accountNumber = document.getElementById('accountNumber').innerText;
+      const tempInput = document.createElement('input');
+      tempInput.value = accountNumber;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempInput);
+      alert('Account number copied to clipboard');
+    }
+  </script>
+</body>
+</html>
