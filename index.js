@@ -1,4 +1,3 @@
-// index.js
 const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
@@ -20,6 +19,7 @@ const userSchema = new mongoose.Schema({
   phoneNumber: { type: String, required: true },
   skillToLearn: { type: String, required: true },
   churchOrParish: { type: String },
+  center: { type: String, required: true },
   proofOfPayment: { type: String, required: true }
 });
 
@@ -62,6 +62,7 @@ app.post('/register', upload.single('proofOfPayment'), async (req, res) => {
       phoneNumber: req.body.phoneNumber,
       skillToLearn: req.body.skillToLearn,
       churchOrParish: req.body.churchOrParish,
+      center: req.body.center,
       proofOfPayment: '/uploads/' + req.file.filename
     });
 
@@ -100,6 +101,7 @@ app.get('/users', async (req, res) => {
                 <th>Phone Number</th>
                 <th>Skill to Learn</th>
                 <th>Church/Parish</th>
+                <th>Center</th>
                 <th>Proof of Payment</th>
               </tr>
             </thead>
@@ -112,6 +114,7 @@ app.get('/users', async (req, res) => {
           <td>${user.phoneNumber}</td>
           <td>${user.skillToLearn}</td>
           <td>${user.churchOrParish || ''}</td>
+          <td>${user.center}</td>
           <td>
             <img src="${user.proofOfPayment}" alt="Proof of Payment" style="max-width: 100px;" data-toggle="modal" data-target="#modal-${index}">
           </td>
@@ -128,6 +131,9 @@ app.get('/users', async (req, res) => {
               </div>
               <div class="modal-body">
                 <img src="${user.proofOfPayment}" alt="Proof of Payment" class="img-fluid">
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
               </div>
             </div>
           </div>
@@ -150,5 +156,5 @@ app.get('/users', async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`App listening at http://localhost:${port}`);
+  console.log(`Server running at http://localhost:${port}`);
 });
