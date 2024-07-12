@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
+const PDFDocument = require('pdfkit');
 
 const app = express();
 const port = 5000;
@@ -80,7 +81,21 @@ app.get('/success', (req, res) => {
 
 app.get('/users', async (req, res) => {
   try {
-    const users = await User.find();
+    // Get page and limit from query parameters, set default values if not provided
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    // Calculate the starting index of the documents to fetch
+    const startIndex = (page - 1) * limit;
+
+    // Fetch users from the database with pagination
+    const users = await User.find().skip(startIndex).limit(limit);
+
+    // Get the total count of users to calculate total pages
+    const totalUsers = await User.countDocuments();
+    const totalPages = Math.ceil(totalUsers / limit);
+
+    // Generate the HTML response with pagination controls
     let userListHTML = `
       <!DOCTYPE html>
       <html lang="en">
@@ -93,6 +108,7 @@ app.get('/users', async (req, res) => {
       <body>
         <div class="container mt-5">
           <h2>Registered Users</h2>
+          <a href="/users/download" class="btn btn-primary mb-3">Download as PDF</a>
           <table class="table">
             <thead>
               <tr>
@@ -106,6 +122,7 @@ app.get('/users', async (req, res) => {
               </tr>
             </thead>
             <tbody>`;
+
     users.forEach((user, index) => {
       userListHTML += `
         <tr>
@@ -139,15 +156,31 @@ app.get('/users', async (req, res) => {
           </div>
         </div>`;
     });
+
     userListHTML += `
             </tbody>
           </table>
+          <nav>
+            <ul class="pagination justify-content-center">`;
+
+    // Generate pagination controls
+    for (let i = 1; i <= totalPages; i++) {
+      userListHTML += `
+        <li class="page-item ${i === page ? 'active' : ''}">
+          <a class="page-link" href="/users?page=${i}&limit=${limit}">${i}</a>
+        </li>`;
+    }
+
+    userListHTML += `
+            </ul>
+          </nav>
         </div>
         <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
       </body>
       </html>`;
+
     res.send(userListHTML);
   } catch (err) {
     console.error('Error fetching users:', err.message);
@@ -155,6 +188,57 @@ app.get('/users', async (req, res) => {
   }
 });
 
+app.get('/users/download', async (req, res) => {
+  try {
+    const users = await User.find();
+
+    const doc = new PDFDocument();
+    const filePath = path.join(__dirname, 'public', 'downloads', 'users.pdf');
+
+    // Ensure downloads directory exists
+    const downloadDir = path.join(__dirname, 'public', 'downloads');
+    if (!fs.existsSync(downloadDir)) {
+      fs.mkdirSync(downloadDir, { recursive: true });
+    }
+
+    doc.pipe(fs.createWriteStream(filePath));
+    doc.fontSize(16).text('Registered Users', { align: 'center' });
+    doc.moveDown();
+
+    users.forEach(user => {
+      doc.fontSize(12).text(`Full Name: ${user.fullName}`);
+      doc.text(`Email: ${user.email}`);
+      doc.text(`Phone Number: ${user.phoneNumber}`);
+      doc.text(`Skill to Learn: ${user.skillToLearn}`);
+      doc.text(`Church/Parish: ${user.churchOrParish || ''}`);
+      doc.text(`Center: ${user.center}`);
+      doc.moveDown();
+    });
+
+    doc.end();
+
+    doc.on('finish', () => {
+      res.download(filePath, 'users.pdf', err => {
+        if (err) {
+          console.error('Error downloading PDF:', err.message);
+          res.status(500).send('Error downloading PDF: ' + err.message);
+        } else {
+          // Optional: Clean up the file after download
+          fs.unlink(filePath, err => {
+            if (err) {
+              console.error('Error deleting PDF file:', err.message);
+            }
+          });
+        }
+      });
+    });
+  } catch (err) {
+    console.error('Error generating PDF:', err.message);
+    res.status(500).send('Error generating PDF: ' + err.message);
+  }
+});
+
+// Start the server
 app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
+  console.log(`Server running on port ${port}`);
 });
